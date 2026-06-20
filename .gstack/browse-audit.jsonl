@@ -28,3 +28,13 @@
 {"ts":"2026-06-20T10:02:27.258Z","cmd":"viewport","args":"375x812","origin":"https://stripe.com/","durationMs":320,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-06-20T10:02:28.621Z","cmd":"screenshot","args":"/tmp/design-analysis-mobile.png","origin":"https://stripe.com/","durationMs":1181,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-06-20T10:02:28.763Z","cmd":"viewport","args":"1280x720","origin":"https://stripe.com/","durationMs":81,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:07.410Z","cmd":"goto","args":"http://localhost:8099/","origin":"http://localhost:8099/","durationMs":62,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:07.624Z","cmd":"screenshot","args":"/tmp/design-md-desktop.png","origin":"http://localhost:8099/","durationMs":101,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:07.713Z","cmd":"viewport","args":"375x812","origin":"http://localhost:8099/","durationMs":4,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:07.827Z","cmd":"screenshot","args":"/tmp/design-md-mobile.png","origin":"http://localhost:8099/","durationMs":33,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:07.890Z","cmd":"viewport","args":"1280x720","origin":"http://localhost:8099/","durationMs":6,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:16.787Z","cmd":"goto","args":"http://localhost:8099/","origin":"http://localhost:8099/","durationMs":24,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:16.938Z","cmd":"snapshot","args":"","origin":"http://localhost:8099/","durationMs":63,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:29.859Z","cmd":"viewport","args":"375x812","origin":"http://localhost:8099/","durationMs":7,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:29.930Z","cmd":"snapshot","args":"","origin":"http://localhost:8099/","durationMs":10,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:04:29.995Z","cmd":"viewport","args":"1280x720","origin":"http://localhost:8099/","durationMs":4,"status":"ok","hasCookies":false,"mode":"launched"}

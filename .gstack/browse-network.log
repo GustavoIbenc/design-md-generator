@@ -264,3 +264,5 @@
 [2026-06-20T10:02:28.956Z] GET https://images.stripeassets.com/fzn2n1nzq965/m9HBEK464p46FeNIhs2PV/f5054a93c8a0a6aabdd1c47675d610ae/wave_crop.jpg?w=1104&fm=webp&q=80 → 200 (2ms, 26531B)
 [2026-06-20T10:02:28.956Z] GET https://images.stripeassets.com/fzn2n1nzq965/43eqkFV1GG5GqcbNNeEzVp/8f4705b1b80a4c835c2960ed8055d649/ConnectMobileBackground.jpg?w=1104&fm=webp&q=90 → 200 (5ms, 172267B)
 [2026-06-20T10:02:28.956Z] GET https://images.stripeassets.com/fzn2n1nzq965/115d4Vd5LVAsqFGDR1ClAv/0ceb2c44a7a7182cd624262420af7544/wave-fallback-desktop.png?w=1392&fm=webp&q=60 → 200 (1ms, -494B)
+[2026-06-20T10:04:07.355Z] GET http://localhost:8099/ → 200 (18ms, 13900B)
+[2026-06-20T10:04:16.765Z] GET http://localhost:8099/ → 200 (5ms, 13900B)
