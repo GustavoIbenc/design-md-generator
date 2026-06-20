@@ -1,0 +1,9 @@
+{
+  "pid": 993037,
+  "port": 18778,
+  "token": "f47eb514-7a5f-4479-8cae-c91995d45536",
+  "startedAt": "2026-06-20T10:02:07.891Z",
+  "serverPath": "/home/ubuntu/gstack/browse/src/server.ts",
+  "mode": "launched",
+  "configHash": "303a7eeccc03078b"
+}

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design MD Generator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    header {
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-group input:focus {
+      border-color: #1a1a1a;
+    }
+
+    .input-group button {
+      padding: 12px 24px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .input-group button:hover {
+      opacity: 0.85;
+    }
+
+    .input-group button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 24px;
+      min-height: 20px;
+    }
+
+    .status.loading {
+      color: #1a1a1a;
+    }
+
+    .status.error {
+      color: #dc3545;
+    }
+
+    .result {
+      display: none;
+    }
+
+    .result.active {
+      display: block;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #888;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      color: #1a1a1a;
+    }
+
+    .tab.active {
+      color: #1a1a1a;
+      border-bottom-color: #1a1a1a;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    /* Markdown preview */
+    .md-preview {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 32px;
+      font-size: 14px;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .md-preview h1 { font-size: 24px; margin: 24px 0 12px; font-weight: 700; }
+    .md-preview h2 { font-size: 18px; margin: 20px 0 8px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .md-preview h3 { font-size: 15px; margin: 16px 0 6px; font-weight: 600; }
+    .md-preview p { margin: 8px 0; }
+    .md-preview ul, .md-preview ol { margin: 8px 0; padding-left: 24px; }
+    .md-preview li { margin: 4px 0; }
+    .md-preview code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .md-preview pre {
+      background: #f8f8f8;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    .md-preview pre code {
+      background: none;
+      padding: 0;
+    }
+    .md-preview table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    .md-preview th, .md-preview td {
+      border: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .md-preview th {
+      background: #f8f8f8;
+      font-weight: 600;
+    }
+    .md-preview blockquote {
+      border-left: 3px solid #ddd;
+      padding-left: 16px;
+      color: #666;
+      margin: 12px 0;
+    }
+    .md-preview hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 24px 0;
+    }
+
+    /* Raw markdown */
+    .md-raw {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    /* Color swatches */
+    .colors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .color-swatch {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .color-swatch .swatch {
+      height: 60px;
+    }
+
+    .color-swatch .info {
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .color-swatch .hex {
+      font-family: monospace;
+      font-weight: 500;
+    }
+
+    .color-swatch .rgb {
+      color: #888;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    /* Font cards */
+    .fonts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .font-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .font-card .family {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 8px;
+      font-family: monospace;
+    }
+
+    .font-card .sample {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .font-card .details {
+      font-size: 12px;
+      color: #999;
+    }
+
+    /* Copy button */
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    .copy-wrapper {
+      position: relative;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .actions button {
+      padding: 8px 16px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .actions button:hover {
+      border-color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Design → Markdown</h1>
+      <p class="subtitle">Paste a URL, get a complete design system doc</p>
+    </header>
+
+    <div class="input-group">
+      <input type="text" id="url" placeholder="https://example.com" autofocus>
+      <button id="analyze-btn" onclick="analyze()">Analyze</button>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="result" id="result">
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('preview')">Preview</div>
+        <div class="tab" onclick="showTab('raw')">Raw Markdown</div>
+        <div class="tab" onclick="showTab('colors')">Colors</div>
+        <div class="tab" onclick="showTab('fonts')">Fonts</div>
+      </div>
+
+      <div class="panel active" id="panel-preview">
+        <div class="md-preview" id="md-preview"></div>
+      </div>
+
+      <div class="panel" id="panel-raw">
+        <div class="actions">
+          <button onclick="copyMarkdown()">Copy to Clipboard</button>
+          <button onclick="downloadMarkdown()">Download .md</button>
+        </div>
+        <div class="copy-wrapper">
+          <div class="md-raw" id="md-raw"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-colors">
+        <div class="colors-grid" id="colors-grid"></div>
+      </div>
+
+      <div class="panel" id="panel-fonts">
+        <div class="fonts-list" id="fonts-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentMarkdown = '';
+    let currentAnalysis = {};
+
+    function rgbToHex(rgb) {
+      const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (match) {
+        return '#' + match.slice(1).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+      }
+      const match2 = rgb.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+      if (match2) {
+        return '#' + match2.slice(1).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+      }
+      return rgb;
+    }
+
+    async function analyze() {
+      const url = document.getElementById('url').value.trim();
+      if (!url) return;
+
+      const btn = document.getElementById('analyze-btn');
+      const status = document.getElementById('status');
+      const result = document.getElementById('result');
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      status.className = 'status loading';
+      status.textContent = 'Crawling site and extracting design tokens...';
+      result.classList.remove('active');
+
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          status.className = 'status error';
+          status.textContent = data.error;
+          return;
+        }
+
+        currentMarkdown = data.markdown;
+        currentAnalysis = data.analysis || {};
+
+        // Render markdown preview
+        document.getElementById('md-preview').innerHTML = simpleMarkdown(data.markdown);
+        document.getElementById('md-raw').textContent = data.markdown;
+
+        // Render colors
+        renderColors(currentAnalysis.colors || []);
+
+        // Render fonts
+        renderFonts(currentAnalysis.fonts || []);
+
+        status.className = 'status';
+        status.textContent = `Done — ${currentAnalysis.title || url}`;
+        result.classList.add('active');
+      } catch (e) {
+        status.className = 'status error';
+        status.textContent = 'Error: ' + e.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analyze';
+      }
+    }
+
+    function renderColors(colors) {
+      const grid = document.getElementById('colors-grid');
+      grid.innerHTML = '';
+      colors.slice(0, 30).forEach(c => {
+        const hex = rgbToHex(c);
+        const div = document.createElement('div');
+        div.className = 'color-swatch';
+        div.innerHTML = `
+          <div class="swatch" style="background: ${c}"></div>
+          <div class="info">
+            <div class="hex">${hex}</div>
+            <div class="rgb">${c}</div>
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function renderFonts(fonts) {
+      const list = document.getElementById('fonts-list');
+      list.innerHTML = '';
+      fonts.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'font-card';
+        div.innerHTML = `
+          <div class="family">${f.family}</div>
+          <div class="sample" style="font-family: ${f.family}">The quick brown fox</div>
+          <div class="details">
+            Sizes: ${f.sizes.join(', ')}<br>
+            Weights: ${f.weights.join(', ')}
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function showTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+    }
+
+    function copyMarkdown() {
+      navigator.clipboard.writeText(currentMarkdown).then(() => {
+        const btn = event.target;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy to Clipboard', 1500);
+      });
+    }
+
+    function downloadMarkdown() {
+      const blob = new Blob([currentMarkdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (currentAnalysis.title || 'design-system').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Simple markdown → HTML (basic)
+    function simpleMarkdown(md) {
+      let html = md
+        // Code blocks
+        .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+        // Inline code
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // Headers
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // Bold
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        // Blockquote
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        // HR
+        .replace(/^---$/gm, '<hr>')
+        // Table rows
+        .replace(/^\|(.+)\|$/gm, (match, content) => {
+          if (content.match(/^[\s\-|]+$/)) return '';
+          const cells = content.split('|').map(c => c.trim());
+          return '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        })
+        // Wrap table rows
+        .replace(/(<tr>[\s\S]*?<\/tr>)/g, '<table>$1</table>')
+        // Clean nested tables
+        .replace(/<\/table>\s*<table>/g, '')
+        // List items
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        // Wrap consecutive li
+        .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+        .replace(/<\/ul>\s*<ul>/g, '')
+        // Paragraphs
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+
+      return '<p>' + html + '</p>';
+    }
+
+    // Enter key
+    document.getElementById('url').addEventListener('keydown', e => {
+      if (e.key === 'Enter') analyze();
+    });
+  </script>
+</body>
+</html>
