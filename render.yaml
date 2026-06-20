@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: design-md-generator
+    runtime: python
+    buildCommand: ""
+    startCommand: python3 server.py
+    envVars:
+      - key: OPENROUTER_KEY
+        sync: false
+    healthCheckPath: /

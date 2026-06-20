@@ -16,18 +16,17 @@ import concurrent.futures
 PORT = 8099
 OPENROUTER_MODEL = "google/gemma-4-31b-it:free"
 
-# Read API key from .env file
-def _load_key():
+# Read API key: env var > .env file
+OPENROUTER_KEY = os.environ.get('OPENROUTER_KEY', '')
+if not OPENROUTER_KEY:
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
     if os.path.exists(env_path):
         with open(env_path) as f:
             for line in f:
                 line = line.strip()
                 if line.startswith('OPENROUTER_KEY=') and len(line) > 20:
-                    return line.split('=', 1)[1]
-    return os.environ.get('OPENROUTER_KEY', '')
-
-OPENROUTER_KEY = _load_key()
+                    OPENROUTER_KEY = line.split('=', 1)[1]
+                    break
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
