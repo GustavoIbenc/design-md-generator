@@ -240,13 +240,182 @@ def call_llm(tokens, url, timeout=120):
         "css_vars": {k: tokens["css_vars"][k] for k in list(tokens["css_vars"].keys())[:40]}
     }
 
-    # Load prompt from file
-    prompt_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prompt.txt')
-    with open(prompt_file) as f:
-        prompt_template = f.read()
+    prompt = f"""You are a senior design systems architect. Generate a COMPREHENSIVE design system document for {url} as Markdown.
 
-    # Use simple replacement instead of .format() to avoid curly brace conflicts
-    prompt = prompt_template.replace('{url}', url).replace('{css_data}', json.dumps(compact, indent=2)[:8000])
+EXTRACTED CSS DATA:
+{json.dumps(compact, indent=2)[:8000]}
+
+Generate a Markdown document with this EXACT structure. Be thorough, specific, and write like a design system documentation — not a data dump.
+
+---
+
+# Design System: {{domain}}
+
+> Extracted from {url}
+> Powered by AI analysis
+
+## Overview
+
+Write 2-3 paragraphs analyzing the design philosophy. Cover:
+- What the site is (marketplace, SaaS, editorial, etc.)
+- The visual weight strategy (photography-led? type-led? whitespace-led?)
+- The single most distinctive design choice
+- How hierarchy is achieved (color? type scale? spacing?)
+
+## Colors
+
+### Brand & Accent
+For each brand color, give: semantic name, hex, and EXACT usage context.
+Example: "Rausch (#FF385C): The single brand color. Used for primary CTA backgrounds, the search orb, the heart save state."
+
+### Surface
+Document canvas/background colors: page floor, card surfaces, disabled states.
+
+### Hairlines & Borders
+Document border/divider colors with usage context.
+
+### Text
+Document text colors: headings, body, muted, disabled. Note if they avoid pure black.
+
+### Semantic
+Error, success, warning colors with usage.
+
+### CSS Variables
+```css
+:root {{
+  --primary: #hex;
+  --text-main: #hex;
+  /* etc */
+}}
+```
+
+## Typography
+
+### Font Family
+Document the font stack. Note if it's custom/variable. Mention fallbacks.
+
+### Hierarchy
+Create a FULL token table:
+
+| Token | Size | Weight | Line Height | Letter Spacing | Use |
+|---|---|---|---|---|---|
+| display-xl | 28px | 700 | 1.43 | 0 | Homepage h1 |
+| body-md | 16px | 400 | 1.5 | 0 | Default running text |
+| caption | 14px | 500 | 1.29 | 0 | Field labels |
+
+Include 12-18 tokens covering: display (xl/lg/md/sm), title (md/sm), body (md/sm), caption (sm), button (md/sm), badge, nav-link, etc.
+
+### Principles
+Explain the typographic strategy. Is display weight modest or heavy? Where is the single "loud" typographic moment?
+
+## Spacing System
+
+### Scale
+Document the base unit and full scale with named tokens:
+- `{{spacing.xxs}}` 2px · `{{spacing.xs}}` 4px · `{{spacing.sm}}` 8px · etc.
+
+### CSS Variables
+```css
+:root {{
+  --space-1: 4px;
+  --space-2: 8px;
+  /* etc */
+}}
+```
+
+### Usage Rules
+- Section padding (vertical)
+- Card internal padding
+- Gutters between cards
+- Dense element spacing
+
+## Borders & Radii
+
+### Radius Scale
+Name each radius token and document usage:
+- `{{rounded.sm}}` 8px — buttons
+- `{{rounded.md}}` 12px — cards
+- `{{rounded.full}}` 9999px — pills, avatars
+
+### Border Widths
+Document 1px hairlines, 1.5px medium, 2px focus states.
+
+### Border Color
+Default divider color.
+
+## Elevation (Shadows)
+
+Document the EXACT shadow values with context:
+- Flat (no shadow): 95% of surfaces
+- Card hover: `box-shadow: ...` — exact value
+- Modal/dropdown: if different
+
+Note if the system has progressive elevation tiers or just one.
+
+## Layout
+
+### Container & Grid
+- Max content width
+- Grid system (columns, gutters)
+- Breakpoint behavior
+
+### Responsive Behavior
+
+| Name | Width | Key Changes |
+|---|---|---|
+| Mobile | < 768px | Nav collapses, cards stack 1-up |
+| Tablet | 768-1024px | 2-column grids |
+| Desktop | > 1024px | Full layout |
+
+### Whitespace Philosophy
+Explain the spacing strategy. Is it airy/editorial or dense/marketplace?
+
+## Components
+
+For EACH major component, document:
+- Exact dimensions (height, padding, radius)
+- States (default, hover, active, disabled)
+- Typography tokens used
+- Color tokens used
+- Usage context
+
+### Buttons
+`button-primary` — {{color}} fill, {{text-color}} text, {{radius}} radius, {{padding}}, {{height}}px, weight {{weight}}.
+
+Document: primary, secondary, tertiary, ghost, pill variants.
+
+### Cards
+Document: border vs shadow, radius, padding, image treatment.
+
+### Inputs
+Document: height, padding, radius, border, focus state, label treatment.
+
+### Navigation
+Document: height, logo placement, link styling, mobile behavior.
+
+### Footer
+Document: columns, padding, link styling, legal band.
+
+## Known Gaps
+
+List what wasn't captured:
+- Hover states (if not extractable)
+- Loading/skeleton states
+- Map/interactive widget styling
+- Animation/motion design
+- Dark mode (if absent)
+
+---
+
+RULES:
+1. Use EXACT hex values from extracted data — don't invent colors
+2. Create SEMANTIC names for colors (like "Rausch", "Ink", "Canvas") — not just "Primary", "Secondary"
+3. Typography tokens must have REAL sizes from extracted data
+4. Component specs must include EXACT measurements (height, padding, radius)
+5. Write like documentation, not a list — explain WHY design choices exist
+6. Include CSS custom properties throughout
+7. Be honest about gaps — list what you can't extract
+8. Output PURE MARKDOWN — no JSON, no code fences around the whole thing"""
 
     payload = json.dumps({
         "model": OPENROUTER_MODEL,

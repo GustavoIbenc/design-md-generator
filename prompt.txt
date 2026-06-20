@@ -1,0 +1,196 @@
+You are a senior design systems architect. Generate a COMPREHENSIVE design system document for {url} as Markdown.
+
+EXTRACTED CSS DATA:
+{css_data}
+
+---
+
+# Design System: {{domain}}
+
+> Extracted from {url}
+> Powered by AI analysis
+
+## Overview
+
+Write 2-3 paragraphs analyzing the design philosophy. Cover:
+- What the site is (marketplace, SaaS, editorial, etc.)
+- The visual weight strategy (photography-led? type-led? whitespace-led?)
+- The single most distinctive design choice
+- How hierarchy is achieved (color? type scale? spacing?)
+
+## Colors
+
+### Brand & Accent
+For each brand color, give: semantic name, ONE hex value, and EXACT usage context.
+Example: "Rausch (`{{colors.primary}}` — #FF385C): The single brand color. Used for primary CTA backgrounds, the search orb, the heart save state, and the brand wordmark."
+
+### Surface
+Document canvas/background colors with token references.
+Example: "Canvas (`{{colors.canvas}}` — #FFFFFF): The default page floor."
+
+### Hairlines & Borders
+Document border/divider colors.
+
+### Text
+Document text colors. Note if they avoid pure black.
+
+### Semantic
+Error, success, warning colors.
+
+### CSS Variables
+```css
+:root {
+  {{colors.primary}}: #hex;
+  {{colors.canvas}}: #hex;
+  /* etc — ONE value per token */
+}
+```
+
+## Typography
+
+### Font Family
+Document the font stack. Note if it's custom/variable.
+
+### Hierarchy
+Create a FULL token table with EXACT values from extracted data:
+
+| Token | Size | Weight | Line Height | Letter Spacing | Use |
+|---|---|---|---|---|---|
+| {{typography.display-xl}} | 28px | 700 | 1.43 | 0 | Homepage h1 — because [REASON] |
+| {{typography.body-md}} | 16px | 400 | 1.5 | 0 | Default running text |
+| {{typography.caption}} | 14px | 500 | 1.29 | 0 | Field labels |
+
+Include 12-18 tokens. For EACH token, explain WHY that size/weight was chosen.
+
+### Principles
+Explain the typographic strategy. Where is the single "loud" typographic moment? Why?
+
+## Spacing System
+
+### Scale
+- `{{spacing.xxs}}` 2px · `{{spacing.xs}}` 4px · `{{spacing.sm}}` 8px · `{{spacing.md}}` 12px · `{{spacing.base}}` 16px · `{{spacing.lg}}` 24px · `{{spacing.xl}}` 32px · `{{spacing.xxl}}` 48px · `{{spacing.section}}` 64px
+
+### CSS Variables
+```css
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  /* etc */
+}
+```
+
+### Usage Rules
+- Section padding: {{spacing.section}} — because [REASON]
+- Card internal padding: {{spacing.lg}} — because [REASON]
+- Gutters between cards: {{spacing.base}} — because [REASON]
+
+## Borders & Radii
+
+### Radius Scale
+- `{{rounded.sm}}` 8px — buttons — because [REASON]
+- `{{rounded.md}}` 12px — cards — because [REASON]
+- `{{rounded.full}}` 9999px — pills, avatars
+
+### Border Widths
+- 1px hairlines
+- 1.5px medium (active states)
+- 2px focus states
+
+### Border Color
+Default divider color with token reference.
+
+## Elevation (Shadows)
+
+Document EXACT shadow values with context:
+- Flat (no shadow): 95% of surfaces
+- Card hover: `box-shadow: ...` — exact value, used on [COMPONENTS]
+- Modal/dropdown: if different
+
+Note if the system has progressive elevation tiers or just one.
+
+## Layout
+
+### Container & Grid
+- Max content width
+- Grid system
+
+### Responsive Behavior
+
+| Name | Width | Key Changes |
+|---|---|---|
+| Mobile | < 768px | Nav collapses, cards stack 1-up |
+| Tablet | 768-1024px | 2-column grids |
+| Desktop | > 1024px | Full layout |
+
+### Whitespace Philosophy
+Explain the spacing strategy.
+
+## Components
+
+For EACH component, document using CROSS-REFERENCES to tokens:
+
+### Buttons
+
+`button-primary` — `{{colors.primary}}` fill, `{{colors.on-primary}}` text, `{{rounded.sm}}` radius, `{{spacing.base}}×{{spacing.lg}}` padding, 48px height, `{{typography.button-md}}`.
+
+`button-secondary` — `{{colors.canvas}}` fill, `{{colors.ink}}` text, 1px `{{colors.hairline}}` outline, `{{rounded.sm}}` radius.
+
+`button-tertiary-text` — Plain `{{colors.ink}}` text, no surface, no border. Underlined on hover.
+
+Document: primary, secondary, tertiary, ghost, pill variants. Include states (default, hover, active, disabled).
+
+### Search Surface
+
+`search-bar-pill` — `{{colors.canvas}}` fill, `{{rounded.full}}` radius, 64px height, 1px `{{colors.hairline}}` border. Divided by vertical hairlines into segments.
+
+`search-orb` — `{{colors.primary}}` fill, 48×48px circular, white icon.
+
+### Top Navigation
+
+`top-nav` — `{{colors.canvas}}` surface, 80px height, 1px bottom `{{colors.hairline}}`.
+
+`product-tab-active` — `{{colors.ink}}` label, 2px `{{colors.ink}}` underline.
+
+### Listing Cards
+
+`property-card` — Photo-first. `{{rounded.md}}` corner clipping, image carousel, "Guest favorite" floating badge, heart icon top-right.
+
+`guest-favorite-badge` — `{{colors.canvas}}` pill (`{{rounded.full}}`), 11px/600 weight.
+
+### Listing Detail
+
+`rating-display-card` — 64px/700 rating number. The ONLY typographically loud moment.
+
+`reservation-card` — Sticky right-rail. `{{colors.canvas}}` surface, `{{rounded.md}}`, 1px `{{colors.hairline}}`, 24px padding. Contains price (`{{typography.display-md}}`), "Reserve" `{{component.button-primary}}`.
+
+### Date Picker
+
+`date-picker-day` — 40×40px circular, `{{typography.body-sm}}`.
+
+`date-picker-day-selected` — `{{colors.ink}}` fill, `{{colors.on-primary}}` text.
+
+### Forms
+
+`text-input` — `{{colors.canvas}}`, 1px `{{colors.hairline}}`, `{{rounded.sm}}`, 56px height. On focus: 2px `{{colors.ink}}`.
+
+### Footer
+
+`footer-light` — `{{colors.canvas}}`, `{{spacing.xxl}}×{{spacing.lg}}` padding. 3-column link list.
+
+`legal-band` — Copyright, language picker, social icons. `{{colors.muted}}` text.
+
+## Known Gaps
+
+- Hover states (if not extractable)
+- Loading/skeleton states
+- Animation/motion design
+- Dark mode (if absent)
+
+---
+
+CRITICAL RULES:
+1. ONE hex value per color token — use it EVERYWHERE. No inconsistencies.
+2. Cross-reference tokens: `{{colors.primary}}`, `{{component.button-primary}}`, `{{typography.body-md}}` — not prose descriptions.
+3. Every token needs a WHY — "because [REASON]" or inline explanation.
+4. Component specs must use token cross-references, not raw values.
+5. Output PURE MARKDOWN — no JSON, no wrapping code fences.
