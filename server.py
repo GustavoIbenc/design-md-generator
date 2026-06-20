@@ -34,16 +34,30 @@ ctx.verify_mode = ssl.CERT_NONE
 
 
 def fetch_url(url, timeout=15):
-    """Fetch URL directly."""
-    req = Request(url, headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        'Accept': 'text/html,text/css,*/*',
-    })
-    with urlopen(req, timeout=timeout, context=ctx) as resp:
-        ct = resp.headers.get('Content-Type', '')
-        if 'text' in ct or 'javascript' in ct or 'json' in ct or url.endswith(('.css', '.js')):
-            return resp.read().decode('utf-8', errors='replace')
-        return ''
+    """Fetch URL directly with redirect following."""
+    # Follow redirects manually
+    for _ in range(5):  # max 5 redirects
+        req = Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'identity',
+        })
+        try:
+            with urlopen(req, timeout=timeout, context=ctx) as resp:
+                # Check for redirect
+                if resp.status in (301, 302, 303, 307, 308):
+                    url = resp.headers.get('Location', '')
+                    if not url:
+                        break
+                    continue
+                ct = resp.headers.get('Content-Type', '')
+                if 'text' in ct or 'javascript' in ct or 'json' in ct or url.endswith(('.css', '.js')):
+                    return resp.read().decode('utf-8', errors='replace')
+                return ''
+        except Exception as e:
+            raise Exception(f"Failed to fetch {url}: {str(e)}")
+    return ''
 
 
 def extract_css_sources(html, base_url):
@@ -375,6 +389,19 @@ class Handler(SimpleHTTPRequestHandler):
                 # Step 1: Fetch HTML
                 html = fetch_url(url)
 
+                if not html or len(html) < 100:
+                    # Site might be blocking requests
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "error": f"Could not fetch {url}. The site may be blocking automated requests (Cloudflare, bot protection).",
+                        "url": url,
+                        "_source": "error"
+                    }).encode())
+                    return
+
                 # Step 2: Fetch CSS from external stylesheets + inline
                 all_css = extract_css_sources(html, url)
 
@@ -404,8 +431,9 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-                self.send_response(500)
+                self.send_response(200)
                 self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode())
         else:
