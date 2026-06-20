@@ -34,18 +34,25 @@ ctx.verify_mode = ssl.CERT_NONE
 
 
 def fetch_url(url, timeout=15):
-    """Fetch URL directly with redirect following."""
-    # Follow redirects manually
-    for _ in range(5):  # max 5 redirects
-        req = Request(url, headers={
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'identity',
-        })
+    """Fetch URL directly with full browser headers."""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'identity',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+    }
+    
+    for _ in range(5):
+        req = Request(url, headers=headers)
         try:
             with urlopen(req, timeout=timeout, context=ctx) as resp:
-                # Check for redirect
                 if resp.status in (301, 302, 303, 307, 308):
                     url = resp.headers.get('Location', '')
                     if not url:
@@ -387,16 +394,31 @@ class Handler(SimpleHTTPRequestHandler):
                     url = "https://" + url
 
                 # Step 1: Fetch HTML
-                html = fetch_url(url)
+                try:
+                    html = fetch_url(url)
+                except Exception as fetch_err:
+                    # Check if it's a 403/blocked error
+                    err_str = str(fetch_err)
+                    if '403' in err_str or 'Forbidden' in err_str:
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(json.dumps({
+                            "error": f"Site blocked: {url}. This site uses bot protection (Akamai/Cloudflare) that blocks cloud server IPs. Try a different URL.",
+                            "url": url,
+                            "_source": "error"
+                        }).encode())
+                        return
+                    raise
 
                 if not html or len(html) < 100:
-                    # Site might be blocking requests
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.send_header("Access-Control-Allow-Origin", "*")
                     self.end_headers()
                     self.wfile.write(json.dumps({
-                        "error": f"Could not fetch {url}. The site may be blocking automated requests (Cloudflare, bot protection).",
+                        "error": f"Site blocked: {url}. This site uses bot protection (Akamai/Cloudflare) that blocks cloud server IPs. Try a different URL or use the site's public design tokens.",
                         "url": url,
                         "_source": "error"
                     }).encode())

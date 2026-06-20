@@ -69,3 +69,5 @@
 {"ts":"2026-06-20T10:27:44.180Z","cmd":"click","args":"@e2","origin":"http://localhost:8099/","durationMs":27,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-06-20T10:28:02.299Z","cmd":"screenshot","args":"/tmp/design-md-final.png","origin":"http://localhost:8099/","durationMs":56,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-06-20T10:28:49.683Z","cmd":"screenshot","args":"/tmp/design-md-final2.png","origin":"http://localhost:8099/","durationMs":335,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T11:42:17.686Z","cmd":"snapshot","args":"--url https://www.mastercard.com","origin":"about:blank","durationMs":8,"status":"error","hasCookies":false,"mode":"launched","error":"Unknown snapshot flag: --url"}
+{"ts":"2026-06-20T11:42:25.008Z","cmd":"goto","args":"https://www.mastercard.com","origin":"https://www.mastercard.com/","durationMs":126,"status":"ok","hasCookies":false,"mode":"launched"}
