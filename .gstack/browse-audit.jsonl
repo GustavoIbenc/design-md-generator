@@ -52,3 +52,20 @@
 {"ts":"2026-06-20T10:06:21.991Z","cmd":"click","args":"@e2","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":53,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-06-20T10:06:32.110Z","cmd":"screenshot","args":"/tmp/design-md-result2.png","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":57,"status":"ok","hasCookies":false,"mode":"launched"}
 {"ts":"2026-06-20T10:06:53.194Z","cmd":"screenshot","args":"/tmp/design-md-result3.png","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":220,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:14:20.951Z","cmd":"goto","args":"file:///home/ubuntu/design-md-generator/index.html","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":19,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:14:21.057Z","cmd":"snapshot","args":"-i","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":33,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:14:21.451Z","cmd":"fill","args":"@e1 https://stripe.com","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":334,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:14:21.563Z","cmd":"click","args":"@e2","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":53,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:14:33.851Z","cmd":"screenshot","args":"/tmp/design-md-v2.png","origin":"file:///home/ubuntu/design-md-generator/index.html","durationMs":228,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:20:45.299Z","cmd":"goto","args":"http://localhost:8099/","origin":"http://localhost:8099/","durationMs":53,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:20:45.421Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8099/","durationMs":51,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:20:45.793Z","cmd":"fill","args":"@e1 https://linear.app","origin":"http://localhost:8099/","durationMs":309,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:20:45.906Z","cmd":"click","args":"@e2","origin":"http://localhost:8099/","durationMs":53,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:21:01.018Z","cmd":"screenshot","args":"/tmp/design-md-v3.png","origin":"http://localhost:8099/","durationMs":53,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:21:33.872Z","cmd":"screenshot","args":"/tmp/design-md-v3b.png","origin":"http://localhost:8099/","durationMs":65,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:27:43.599Z","cmd":"goto","args":"http://localhost:8099/","origin":"http://localhost:8099/","durationMs":24,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:27:43.693Z","cmd":"snapshot","args":"-i","origin":"http://localhost:8099/","durationMs":25,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:27:44.098Z","cmd":"fill","args":"@e1 https://stripe.com","origin":"http://localhost:8099/","durationMs":346,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:27:44.180Z","cmd":"click","args":"@e2","origin":"http://localhost:8099/","durationMs":27,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:28:02.299Z","cmd":"screenshot","args":"/tmp/design-md-final.png","origin":"http://localhost:8099/","durationMs":56,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-06-20T10:28:49.683Z","cmd":"screenshot","args":"/tmp/design-md-final2.png","origin":"http://localhost:8099/","durationMs":335,"status":"ok","hasCookies":false,"mode":"launched"}
