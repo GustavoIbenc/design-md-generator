@@ -266,3 +266,8 @@
 [2026-06-20T10:02:28.956Z] GET https://images.stripeassets.com/fzn2n1nzq965/115d4Vd5LVAsqFGDR1ClAv/0ceb2c44a7a7182cd624262420af7544/wave-fallback-desktop.png?w=1392&fm=webp&q=60 → 200 (1ms, -494B)
 [2026-06-20T10:04:07.355Z] GET http://localhost:8099/ → 200 (18ms, 13900B)
 [2026-06-20T10:04:16.765Z] GET http://localhost:8099/ → 200 (5ms, 13900B)
+[2026-06-20T10:06:00.177Z] GET file:///home/ubuntu/design-md-generator/index.html → 200 (1ms, 22122B)
+[2026-06-20T10:06:04.711Z] GET file:///home/ubuntu/design-md-generator/index.html → 200 (2ms, 22122B)
+[2026-06-20T10:06:08.672Z] GET file:///home/ubuntu/design-md-generator/index.html → 200 (1ms, 22122B)
+[2026-06-20T10:06:21.341Z] GET file:///home/ubuntu/design-md-generator/index.html → 200 (1ms, 22122B)
+[2026-06-20T10:06:21.987Z] GET https://api.allorigins.win/raw?url=https%3A%2F%2Fgithub.com → pending (?ms, ?B)

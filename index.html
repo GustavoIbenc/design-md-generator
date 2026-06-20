@@ -3,550 +3,681 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Design MD Generator</title>
+  <title>Design MD — Extract Design Systems from Any Website</title>
+  <meta name="description" content="Paste a URL, get a complete design system markdown document. Colors, typography, layout, components — all extracted automatically.">
   <style>
+    :root {
+      --bg: #fafafa;
+      --surface: #fff;
+      --border: #e5e5e5;
+      --text: #171717;
+      --text-secondary: #737373;
+      --accent: #171717;
+      --radius: 10px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #fafafa;
-      color: #1a1a1a;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 900px;
+    .wrap {
+      max-width: 720px;
       margin: 0 auto;
-      padding: 40px 24px;
+      padding: 60px 20px 80px;
     }
 
-    header {
-      margin-bottom: 40px;
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #666;
-      font-size: 14px;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 8px;
+    /* Header */
+    .logo {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
       margin-bottom: 32px;
     }
 
-    .input-group input {
-      flex: 1;
-      padding: 12px 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s;
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 12px;
     }
 
-    .input-group input:focus {
-      border-color: #1a1a1a;
+    .tagline {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 40px;
     }
 
-    .input-group button {
-      padding: 12px 24px;
-      background: #1a1a1a;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s;
-      white-space: nowrap;
-    }
-
-    .input-group button:hover {
-      opacity: 0.85;
-    }
-
-    .input-group button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .status {
-      font-size: 13px;
-      color: #999;
-      margin-bottom: 24px;
-      min-height: 20px;
-    }
-
-    .status.loading {
-      color: #1a1a1a;
-    }
-
-    .status.error {
-      color: #dc3545;
-    }
-
-    .result {
-      display: none;
-    }
-
-    .result.active {
-      display: block;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 24px;
-    }
-
-    .tab {
-      padding: 10px 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #888;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.15s;
-    }
-
-    .tab:hover {
-      color: #1a1a1a;
-    }
-
-    .tab.active {
-      color: #1a1a1a;
-      border-bottom-color: #1a1a1a;
-    }
-
-    .panel {
-      display: none;
-    }
-
-    .panel.active {
-      display: block;
-    }
-
-    /* Markdown preview */
-    .md-preview {
-      background: #fff;
-      border: 1px solid #e8e8e8;
-      border-radius: 8px;
-      padding: 32px;
-      font-size: 14px;
-      line-height: 1.7;
-      overflow-x: auto;
-    }
-
-    .md-preview h1 { font-size: 24px; margin: 24px 0 12px; font-weight: 700; }
-    .md-preview h2 { font-size: 18px; margin: 20px 0 8px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 6px; }
-    .md-preview h3 { font-size: 15px; margin: 16px 0 6px; font-weight: 600; }
-    .md-preview p { margin: 8px 0; }
-    .md-preview ul, .md-preview ol { margin: 8px 0; padding-left: 24px; }
-    .md-preview li { margin: 4px 0; }
-    .md-preview code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 13px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-    }
-    .md-preview pre {
-      background: #f8f8f8;
-      border: 1px solid #eee;
-      border-radius: 6px;
-      padding: 16px;
-      overflow-x: auto;
-      margin: 12px 0;
-    }
-    .md-preview pre code {
-      background: none;
-      padding: 0;
-    }
-    .md-preview table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 12px 0;
-      font-size: 13px;
-    }
-    .md-preview th, .md-preview td {
-      border: 1px solid #e0e0e0;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    .md-preview th {
-      background: #f8f8f8;
-      font-weight: 600;
-    }
-    .md-preview blockquote {
-      border-left: 3px solid #ddd;
-      padding-left: 16px;
-      color: #666;
-      margin: 12px 0;
-    }
-    .md-preview hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 24px 0;
-    }
-
-    /* Raw markdown */
-    .md-raw {
-      background: #1a1a1a;
-      color: #e0e0e0;
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    /* Color swatches */
-    .colors-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .color-swatch {
-      border: 1px solid #e8e8e8;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .color-swatch .swatch {
-      height: 60px;
-    }
-
-    .color-swatch .info {
-      padding: 8px;
-      font-size: 12px;
-    }
-
-    .color-swatch .hex {
-      font-family: monospace;
-      font-weight: 500;
-    }
-
-    .color-swatch .rgb {
-      color: #888;
-      font-size: 11px;
-      margin-top: 2px;
-    }
-
-    /* Font cards */
-    .fonts-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .font-card {
-      background: #fff;
-      border: 1px solid #e8e8e8;
-      border-radius: 8px;
-      padding: 20px;
-    }
-
-    .font-card .family {
-      font-size: 13px;
-      color: #888;
-      margin-bottom: 8px;
-      font-family: monospace;
-    }
-
-    .font-card .sample {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-
-    .font-card .details {
-      font-size: 12px;
-      color: #999;
-    }
-
-    /* Copy button */
-    .copy-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      padding: 6px 12px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 6px;
-      color: #ccc;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .copy-btn:hover {
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-    }
-
-    .copy-wrapper {
-      position: relative;
-    }
-
-    .actions {
+    /* Input */
+    .input-row {
       display: flex;
       gap: 8px;
       margin-bottom: 16px;
     }
 
-    .actions button {
-      padding: 8px 16px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.15s;
+    .input-row input {
+      flex: 1;
+      height: 48px;
+      padding: 0 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-family: var(--mono);
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
     }
 
-    .actions button:hover {
-      border-color: #1a1a1a;
+    .input-row input::placeholder {
+      color: #bfbfbf;
+      font-family: var(--font);
+    }
+
+    .input-row input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      height: 48px;
+      padding: 0 24px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .hint {
+      font-size: 12px;
+      color: #a3a3a3;
+      margin-bottom: 40px;
+    }
+
+    /* Status */
+    .status {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status.error { color: #dc2626; }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results */
+    .results { display: none; }
+    .results.show { display: block; }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1.5px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1.5px;
+      transition: all 0.12s;
+      user-select: none;
+    }
+
+    .tab:hover { color: var(--text); }
+    .tab.on { color: var(--text); border-bottom-color: var(--accent); }
+
+    .panel { display: none; }
+    .panel.on { display: block; }
+
+    /* Markdown render */
+    .render {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      font-size: 14px;
+      line-height: 1.75;
+      overflow-x: auto;
+    }
+
+    .render h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+    .render h2 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .render h3 { font-size: 14px; font-weight: 600; margin: 20px 0 6px; }
+    .render p { margin: 6px 0; }
+    .render ul { margin: 6px 0 6px 20px; }
+    .render li { margin: 3px 0; }
+    .render code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: var(--mono); }
+    .render pre { background: #f8f8f8; border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 10px 0; }
+    .render pre code { background: none; padding: 0; }
+    .render table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+    .render th, .render td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; }
+    .render th { background: #f8f8f8; font-weight: 600; }
+    .render blockquote { border-left: 3px solid var(--border); padding-left: 14px; color: var(--text-secondary); margin: 10px 0; }
+    .render hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    /* Raw */
+    .raw-wrap { position: relative; }
+    .raw {
+      background: #1a1a1a;
+      color: #d4d4d4;
+      border-radius: var(--radius);
+      padding: 24px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.65;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 560px;
+      overflow-y: auto;
+    }
+
+    .copy-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .copy-bar button {
+      padding: 7px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: border-color 0.12s;
+    }
+
+    .copy-bar button:hover { border-color: var(--accent); }
+
+    /* Colors grid */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .swatch {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .swatch-color { height: 52px; }
+    .swatch-info { padding: 7px 8px; }
+    .swatch-hex { font-family: var(--mono); font-size: 11.5px; font-weight: 500; }
+    .swatch-rgb { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
+
+    /* Font cards */
+    .font-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .font-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .font-name { font-family: var(--mono); font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .font-sample { font-size: 26px; margin-bottom: 6px; }
+    .font-meta { font-size: 11px; color: #a3a3a3; }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+
+    @media (max-width: 520px) {
+      .wrap { padding: 40px 16px 60px; }
+      h1 { font-size: 28px; }
+      .input-row { flex-direction: column; }
+      .btn { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Design → Markdown</h1>
-      <p class="subtitle">Paste a URL, get a complete design system doc</p>
-    </header>
+  <div class="wrap">
+    <div class="logo">Design MD</div>
+    <h1>Extract design systems<br>from any website</h1>
+    <p class="tagline">Paste a URL. Get colors, typography, layout, components — all as clean markdown.</p>
 
-    <div class="input-group">
-      <input type="text" id="url" placeholder="https://example.com" autofocus>
-      <button id="analyze-btn" onclick="analyze()">Analyze</button>
+    <div class="input-row">
+      <input type="url" id="url" placeholder="https://stripe.com" autofocus>
+      <button class="btn" id="go" onclick="run()">Extract</button>
     </div>
+    <div class="hint">Uses a CORS proxy — don't analyze sensitive/internal sites</div>
 
     <div class="status" id="status"></div>
 
-    <div class="result" id="result">
+    <div class="results" id="results">
       <div class="tabs">
-        <div class="tab active" onclick="showTab('preview')">Preview</div>
-        <div class="tab" onclick="showTab('raw')">Raw Markdown</div>
-        <div class="tab" onclick="showTab('colors')">Colors</div>
-        <div class="tab" onclick="showTab('fonts')">Fonts</div>
+        <div class="tab on" data-tab="preview">Preview</div>
+        <div class="tab" data-tab="raw">Markdown</div>
+        <div class="tab" data-tab="colors">Colors</div>
+        <div class="tab" data-tab="fonts">Fonts</div>
       </div>
 
-      <div class="panel active" id="panel-preview">
-        <div class="md-preview" id="md-preview"></div>
-      </div>
-
-      <div class="panel" id="panel-raw">
-        <div class="actions">
-          <button onclick="copyMarkdown()">Copy to Clipboard</button>
-          <button onclick="downloadMarkdown()">Download .md</button>
+      <div class="panel on" id="p-preview"><div class="render" id="render"></div></div>
+      <div class="panel" id="p-raw">
+        <div class="copy-bar">
+          <button onclick="copyMd()">Copy</button>
+          <button onclick="dlMd()">Download .md</button>
         </div>
-        <div class="copy-wrapper">
-          <div class="md-raw" id="md-raw"></div>
-        </div>
+        <div class="raw-wrap"><div class="raw" id="raw"></div></div>
       </div>
-
-      <div class="panel" id="panel-colors">
-        <div class="colors-grid" id="colors-grid"></div>
-      </div>
-
-      <div class="panel" id="panel-fonts">
-        <div class="fonts-list" id="fonts-list"></div>
-      </div>
+      <div class="panel" id="p-colors"><div class="swatches" id="swatches"></div></div>
+      <div class="panel" id="p-fonts"><div class="font-list" id="fontlist"></div></div>
     </div>
   </div>
 
-  <script>
-    let currentMarkdown = '';
-    let currentAnalysis = {};
+<script>
+let md = '';
+let data = {};
 
-    function rgbToHex(rgb) {
-      const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-      if (match) {
-        return '#' + match.slice(1).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+// Tab switching
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    document.getElementById('p-' + t.dataset.tab).classList.add('on');
+  });
+});
+
+// Enter key
+document.getElementById('url').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+async function run() {
+  const raw = document.getElementById('url').value.trim();
+  if (!raw) return;
+
+  const url = raw.startsWith('http') ? raw : 'https://' + raw;
+  const btn = document.getElementById('go');
+  const st = document.getElementById('status');
+  const res = document.getElementById('results');
+
+  btn.disabled = true;
+  btn.textContent = 'Extracting…';
+  st.className = 'status';
+  st.innerHTML = '<div class="spinner"></div> Fetching page…';
+  res.classList.remove('show');
+
+  try {
+    // Fetch via CORS proxy
+    st.innerHTML = '<div class="spinner"></div> Fetching page…';
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
+    if (!resp.ok) throw new Error('Failed to fetch (' + resp.status + ')');
+    const html = await resp.text();
+
+    st.innerHTML = '<div class="spinner"></div> Parsing design tokens…';
+    await new Promise(r => setTimeout(r, 50));
+
+    data = extractDesign(html, url);
+    md = generateMd(data);
+
+    // Render
+    document.getElementById('render').innerHTML = renderPreview(md);
+    document.getElementById('raw').textContent = md;
+    renderSwatches(data.colors);
+    renderFonts(data.fonts);
+
+    st.textContent = '✓ ' + (data.title || new URL(url).hostname);
+    res.classList.add('show');
+  } catch (e) {
+    st.className = 'status error';
+    st.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Extract';
+  }
+}
+
+function extractDesign(html, url) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const d = {
+    url,
+    title: doc.querySelector('title')?.textContent?.trim() || '',
+    meta: {},
+    colors: [],
+    fonts: [],
+    headings: [],
+    layout: {},
+    components: [],
+    images: 0,
+    links: 0
+  };
+
+  // Meta
+  const metaDesc = doc.querySelector('meta[name="description"]');
+  const metaTheme = doc.querySelector('meta[name="theme-color"]');
+  const metaOG = doc.querySelector('meta[property="og:image"]');
+  if (metaDesc) d.meta.description = metaDesc.content;
+  if (metaTheme) d.meta.themeColor = metaTheme.content;
+  if (metaOG) d.meta.ogImage = metaOG.content;
+
+  // Colors from inline styles + style tags
+  const colorSet = new Set();
+  const colorRegex = /#([0-9a-fA-F]{3,8})\b/g;
+  const rgbRegex = /rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/g;
+  const rgbaRegex = /rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)/g;
+  const hslRegex = /hsl\(\s*\d+\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*\)/g;
+
+  // Collect from all elements with inline styles
+  doc.querySelectorAll('[style]').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    let m;
+    while ((m = colorRegex.exec(s)) !== null) colorSet.add('#' + m[1]);
+    while ((m = rgbRegex.exec(s)) !== null) colorSet.add(m[0]);
+    while ((m = rgbaRegex.exec(s)) !== null) colorSet.add(m[0]);
+    while ((m = hslRegex.exec(s)) !== null) colorSet.add(m[0]);
+  });
+
+  // Collect from <style> tags
+  doc.querySelectorAll('style').forEach(style => {
+    const text = style.textContent || '';
+    let m;
+    colorRegex.lastIndex = 0;
+    rgbRegex.lastIndex = 0;
+    rgbaRegex.lastIndex = 0;
+    hslRegex.lastIndex = 0;
+    while ((m = colorRegex.exec(text)) !== null) colorSet.add('#' + m[1]);
+    while ((m = rgbRegex.exec(text)) !== null) colorSet.add(m[0]);
+    while ((m = rgbaRegex.exec(text)) !== null) colorSet.add(m[0]);
+    while ((m = hslRegex.exec(text)) !== null) colorSet.add(m[0]);
+  });
+
+  // Collect from class names that suggest colors (bg-*, text-*, etc.)
+  // and from link/meta theme colors
+  if (d.meta.themeColor) colorSet.add(d.meta.themeColor);
+
+  // Filter out boring colors
+  d.colors = [...colorSet].filter(c => {
+    if (/^#[0-9a-f]{3}$/i.test(c)) return false; // skip 3-char hex
+    if (/^#(fff|ffffff|000|000000|f5f5f5|fafafa|f8f8f8|e5e5e5|333|333333|666|666666|999|999999)$/i.test(c)) return false;
+    return true;
+  }).slice(0, 30);
+
+  // Fonts from style tags
+  const fontSet = new Set();
+  doc.querySelectorAll('style').forEach(style => {
+    const text = style.textContent || '';
+    const fontMatches = text.matchAll(/font-family\s*:\s*([^;}]+)/gi);
+    for (const m of fontMatches) {
+      const val = m[1].trim().replace(/['"]/g, '').split(',')[0].trim();
+      if (val && !val.match(/^(sans-serif|serif|monospace|cursive|fantasy|system-ui|inherit|initial|unset)$/i)) {
+        fontSet.add(val);
       }
-      const match2 = rgb.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
-      if (match2) {
-        return '#' + match2.slice(1).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-      }
-      return rgb;
     }
+  });
 
-    async function analyze() {
-      const url = document.getElementById('url').value.trim();
-      if (!url) return;
-
-      const btn = document.getElementById('analyze-btn');
-      const status = document.getElementById('status');
-      const result = document.getElementById('result');
-
-      btn.disabled = true;
-      btn.textContent = 'Analyzing...';
-      status.className = 'status loading';
-      status.textContent = 'Crawling site and extracting design tokens...';
-      result.classList.remove('active');
-
-      try {
-        const res = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-          status.className = 'status error';
-          status.textContent = data.error;
-          return;
-        }
-
-        currentMarkdown = data.markdown;
-        currentAnalysis = data.analysis || {};
-
-        // Render markdown preview
-        document.getElementById('md-preview').innerHTML = simpleMarkdown(data.markdown);
-        document.getElementById('md-raw').textContent = data.markdown;
-
-        // Render colors
-        renderColors(currentAnalysis.colors || []);
-
-        // Render fonts
-        renderFonts(currentAnalysis.fonts || []);
-
-        status.className = 'status';
-        status.textContent = `Done — ${currentAnalysis.title || url}`;
-        result.classList.add('active');
-      } catch (e) {
-        status.className = 'status error';
-        status.textContent = 'Error: ' + e.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Analyze';
+  // Also check inline font-family
+  doc.querySelectorAll('[style]').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    const m = s.match(/font-family\s*:\s*([^;]+)/i);
+    if (m) {
+      const val = m[1].trim().replace(/['"]/g, '').split(',')[0].trim();
+      if (val && !val.match(/^(sans-serif|serif|monospace|cursive|fantasy|system-ui|inherit|initial|unset)$/i)) {
+        fontSet.add(val);
       }
     }
+  });
 
-    function renderColors(colors) {
-      const grid = document.getElementById('colors-grid');
-      grid.innerHTML = '';
-      colors.slice(0, 30).forEach(c => {
-        const hex = rgbToHex(c);
-        const div = document.createElement('div');
-        div.className = 'color-swatch';
-        div.innerHTML = `
-          <div class="swatch" style="background: ${c}"></div>
-          <div class="info">
-            <div class="hex">${hex}</div>
-            <div class="rgb">${c}</div>
-          </div>
-        `;
-        grid.appendChild(div);
-      });
-    }
+  d.fonts = [...fontSet].slice(0, 8);
 
-    function renderFonts(fonts) {
-      const list = document.getElementById('fonts-list');
-      list.innerHTML = '';
-      fonts.forEach(f => {
-        const div = document.createElement('div');
-        div.className = 'font-card';
-        div.innerHTML = `
-          <div class="family">${f.family}</div>
-          <div class="sample" style="font-family: ${f.family}">The quick brown fox</div>
-          <div class="details">
-            Sizes: ${f.sizes.join(', ')}<br>
-            Weights: ${f.weights.join(', ')}
-          </div>
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function showTab(name) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('panel-' + name).classList.add('active');
-    }
-
-    function copyMarkdown() {
-      navigator.clipboard.writeText(currentMarkdown).then(() => {
-        const btn = event.target;
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy to Clipboard', 1500);
-      });
-    }
-
-    function downloadMarkdown() {
-      const blob = new Blob([currentMarkdown], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (currentAnalysis.title || 'design-system').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.md';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // Simple markdown → HTML (basic)
-    function simpleMarkdown(md) {
-      let html = md
-        // Code blocks
-        .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-        // Inline code
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        // Headers
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-        // Bold
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // Italic
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        // Blockquote
-        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-        // HR
-        .replace(/^---$/gm, '<hr>')
-        // Table rows
-        .replace(/^\|(.+)\|$/gm, (match, content) => {
-          if (content.match(/^[\s\-|]+$/)) return '';
-          const cells = content.split('|').map(c => c.trim());
-          return '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
-        })
-        // Wrap table rows
-        .replace(/(<tr>[\s\S]*?<\/tr>)/g, '<table>$1</table>')
-        // Clean nested tables
-        .replace(/<\/table>\s*<table>/g, '')
-        // List items
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // Wrap consecutive li
-        .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
-        .replace(/<\/ul>\s*<ul>/g, '')
-        // Paragraphs
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>');
-
-      return '<p>' + html + '</p>';
-    }
-
-    // Enter key
-    document.getElementById('url').addEventListener('keydown', e => {
-      if (e.key === 'Enter') analyze();
+  // Headings
+  for (let i = 1; i <= 6; i++) {
+    doc.querySelectorAll('h' + i).forEach(h => {
+      const text = h.textContent?.trim().slice(0, 60);
+      if (text) d.headings.push({ level: i, text });
     });
-  </script>
+  }
+  d.headings = d.headings.slice(0, 15);
+
+  // Layout hints
+  d.layout.hasNav = !!doc.querySelector('nav, [role="navigation"], header nav');
+  d.layout.hasFooter = !!doc.querySelector('footer');
+  d.layout.hasSidebar = !!doc.querySelector('aside, [role="complementary"]');
+  d.layout.hasGrid = html.includes('grid-template') || html.includes('display: grid') || html.includes('display:grid');
+  d.layout.hasFlex = html.includes('display: flex') || html.includes('display:flex');
+  d.layout.hasMaxWidth = !!html.match(/max-width\s*:\s*\d{3,4}px/);
+  const maxW = html.match(/max-width\s*:\s*(\d{3,4})px/);
+  d.layout.maxWidth = maxW ? maxW[1] + 'px' : null;
+
+  // Components
+  d.components.buttons = doc.querySelectorAll('button, [role="button"], input[type="submit"]').length;
+  d.components.inputs = doc.querySelectorAll('input, textarea, select').length;
+  d.components.cards = doc.querySelectorAll('[class*="card"], [class*="Card"], article').length;
+  d.components.images = doc.querySelectorAll('img').length;
+  d.components.links = doc.querySelectorAll('a[href]').length;
+  d.components.sections = doc.querySelectorAll('section').length;
+
+  // Detect common patterns
+  d.patterns = [];
+  if (d.layout.hasNav) d.patterns.push('Navigation');
+  if (d.layout.hasFooter) d.patterns.push('Footer');
+  if (d.layout.hasSidebar) d.patterns.push('Sidebar');
+  if (d.layout.hasGrid) d.patterns.push('CSS Grid');
+  if (d.layout.hasFlex) d.patterns.push('Flexbox');
+  if (d.components.cards > 2) d.patterns.push('Card Grid');
+  if (d.components.buttons > 3) d.patterns.push('Multiple CTAs');
+
+  return d;
+}
+
+function generateMd(d) {
+  const lines = [];
+  const hostname = (() => { try { return new URL(d.url).hostname; } catch { return d.url; } })();
+
+  lines.push(`# Design System: ${d.title || hostname}`);
+  lines.push(`\n> Extracted from [${d.url}](${d.url})\n`);
+
+  // Meta
+  if (Object.keys(d.meta).length) {
+    lines.push('## Site Info\n');
+    if (d.meta.description) lines.push(`- **Description:** ${d.meta.description}`);
+    if (d.meta.themeColor) lines.push(`- **Theme Color:** \`${d.meta.themeColor}\``);
+    lines.push('');
+  }
+
+  // Colors
+  if (d.colors.length) {
+    lines.push('## Colors\n');
+    lines.push('| Swatch | Hex |');
+    lines.push('|--------|-----|');
+    d.colors.forEach(c => {
+      lines.push(`| ![](https://via.placeholder.com/20/${c.replace('#', '')}/${c.replace('#', '')}.png) | \`${c}\` |`);
+    });
+    lines.push('');
+
+    lines.push('### CSS Variables\n');
+    lines.push('```css');
+    lines.push(':root {');
+    const names = ['--color-primary', '--color-secondary', '--color-accent', '--color-bg', '--color-text', '--color-muted', '--color-border', '--color-surface', '--color-link', '--color-hover'];
+    d.colors.slice(0, 10).forEach((c, i) => {
+      lines.push(`  ${names[i] || '--color-' + i}: ${c};`);
+    });
+    lines.push('}');
+    lines.push('```\n');
+  }
+
+  // Typography
+  if (d.fonts.length) {
+    lines.push('## Typography\n');
+    d.fonts.forEach(f => {
+      lines.push(`- \`${f}\``);
+    });
+    lines.push('');
+
+    if (d.headings.length) {
+      lines.push('### Content Hierarchy\n');
+      d.headings.slice(0, 10).forEach(h => {
+        lines.push(`- **H${h.level}:** ${h.text}`);
+      });
+      lines.push('');
+    }
+  }
+
+  // Layout
+  lines.push('## Layout\n');
+  lines.push(`- **Nav:** ${d.layout.hasNav ? '✓' : '✗'}`);
+  lines.push(`- **Footer:** ${d.layout.hasFooter ? '✓' : '✗'}`);
+  lines.push(`- **Sidebar:** ${d.layout.hasSidebar ? '✓' : '✗'}`);
+  lines.push(`- **Grid:** ${d.layout.hasGrid ? '✓' : '✗'}`);
+  lines.push(`- **Flexbox:** ${d.layout.hasFlex ? '✓' : '✗'}`);
+  if (d.layout.maxWidth) lines.push(`- **Max Width:** \`${d.layout.maxWidth}\``);
+  lines.push('');
+
+  // Components
+  lines.push('## Components\n');
+  const compEntries = [
+    ['Buttons', d.components.buttons],
+    ['Inputs', d.components.inputs],
+    ['Cards', d.components.cards],
+    ['Images', d.components.images],
+    ['Links', d.components.links],
+    ['Sections', d.components.sections]
+  ].filter(([, v]) => v > 0);
+
+  compEntries.forEach(([name, count]) => {
+    lines.push(`- **${name}:** ${count}`);
+  });
+  lines.push('');
+
+  // Patterns
+  if (d.patterns.length) {
+    lines.push('## Detected Patterns\n');
+    d.patterns.forEach(p => lines.push(`- ${p}`));
+    lines.push('');
+  }
+
+  // Starter CSS
+  lines.push('## Starter CSS\n');
+  lines.push('```css');
+  lines.push('* { margin: 0; padding: 0; box-sizing: border-box; }');
+  if (d.fonts.length) lines.push(`body { font-family: ${d.fonts[0]}, sans-serif; }`);
+  if (d.layout.maxWidth) lines.push(`.container { max-width: ${d.layout.maxWidth}; margin: 0 auto; padding: 0 20px; }`);
+  if (d.colors.length >= 2) {
+    lines.push(`body { background: ${d.colors[0]}; color: ${d.colors[1]}; }`);
+  }
+  lines.push('```');
+
+  lines.push('\n---');
+  lines.push(`*Extracted ${d.colors.length} colors · ${d.fonts.length} fonts · ${Object.values(d.components).reduce((a, b) => a + b, 0)} components*`);
+
+  return lines.join('\n');
+}
+
+function renderPreview(md) {
+  return md
+    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/^---$/gm, '<hr>')
+    .replace(/^\|(.+)\|$/gm, (_, c) => {
+      if (c.match(/^[\s\-|]+$/)) return '';
+      return '<tr>' + c.split('|').map(x => `<td>${x.trim()}</td>`).join('') + '</tr>';
+    })
+    .replace(/(<tr>[\s\S]*?<\/tr>)/g, '<table>$1</table>')
+    .replace(/<\/table>\s*<table>/g, '')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g, '')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+    .replace(/^(.+)$/gm, (line) => {
+      if (line.match(/^<[a-z]/)) return line;
+      return line;
+    });
+}
+
+function renderSwatches(colors) {
+  const el = document.getElementById('swatches');
+  if (!colors.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🎨</div>No colors detected</div>'; return; }
+  el.innerHTML = colors.map(c => {
+    const hex = c.startsWith('#') ? c : '';
+    return `<div class="swatch"><div class="swatch-color" style="background:${c}"></div><div class="swatch-info"><div class="swatch-hex">${hex || c}</div></div></div>`;
+  }).join('');
+}
+
+function renderFonts(fonts) {
+  const el = document.getElementById('fontlist');
+  if (!fonts.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">Aa</div>No custom fonts detected</div>'; return; }
+  el.innerHTML = fonts.map(f => {
+    return `<div class="font-card"><div class="font-name">${f}</div><div class="font-sample" style="font-family:${f}">The quick brown fox</div><div class="font-meta">Used on this site</div></div>`;
+  }).join('');
+}
+
+function copyMd() {
+  navigator.clipboard.writeText(md).then(() => {
+    const b = event.target;
+    b.textContent = 'Copied!';
+    setTimeout(() => b.textContent = 'Copy', 1200);
+  });
+}
+
+function dlMd() {
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (data.title || 'design-system').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) + '.md';
+  a.click();
+}
+</script>
 </body>
 </html>
