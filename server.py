@@ -217,89 +217,211 @@ def extract_design_tokens(all_css, html):
     return tokens
 
 
-def call_llm(tokens, url, timeout=90):
-    """Call LLM with extracted tokens."""
+def call_llm(tokens, url, timeout=120):
+    """Call LLM with extracted tokens — generate rich markdown like getdesign.md."""
     # Filter css_vars to only color-like ones for the prompt
     color_vars = {k: v for k, v in tokens.get('css_vars', {}).items()
                   if any(x in k.lower() for x in ['color', 'bg', 'text', 'accent', 'primary', 'border', 'surface'])}
 
     # Create compact token summary for LLM
     compact = {
-        "colors": tokens["colors"][:30],
+        "colors": tokens["colors"][:40],
         "fonts": tokens["fonts"],
-        "font_sizes": dict(sorted(tokens["font_sizes"].items(), key=lambda x: -x[1])[:8]),
+        "font_sizes": dict(sorted(tokens["font_sizes"].items(), key=lambda x: -x[1])[:12]),
         "font_weights": tokens["font_weights"],
-        "line_heights": dict(sorted(tokens["line_heights"].items(), key=lambda x: -x[1])[:4]),
-        "letter_spacings": dict(sorted(tokens["letter_spacings"].items(), key=lambda x: -x[1])[:4]),
-        "shadows": tokens["shadows"][:5],
-        "radii": dict(sorted(tokens["radii"].items(), key=lambda x: -x[1])[:6]),
-        "spacings": dict(sorted(tokens["spacings"].items(), key=lambda x: -x[1])[:10]),
-        "border_widths": dict(sorted(tokens["border_widths"].items(), key=lambda x: -x[1])[:4]),
-        "max_widths": dict(sorted(tokens["max_widths"].items(), key=lambda x: -x[1])[:3]),
-        "css_vars": {k: tokens["css_vars"][k] for k in list(tokens["css_vars"].keys())[:30]}
+        "line_heights": dict(sorted(tokens["line_heights"].items(), key=lambda x: -x[1])[:6]),
+        "letter_spacings": dict(sorted(tokens["letter_spacings"].items(), key=lambda x: -x[1])[:6]),
+        "shadows": tokens["shadows"][:8],
+        "radii": dict(sorted(tokens["radii"].items(), key=lambda x: -x[1])[:10]),
+        "spacings": dict(sorted(tokens["spacings"].items(), key=lambda x: -x[1])[:15]),
+        "border_widths": dict(sorted(tokens["border_widths"].items(), key=lambda x: -x[1])[:6]),
+        "max_widths": dict(sorted(tokens["max_widths"].items(), key=lambda x: -x[1])[:5]),
+        "transitions": tokens["transitions"][:5],
+        "css_vars": {k: tokens["css_vars"][k] for k in list(tokens["css_vars"].keys())[:40]}
     }
 
-    prompt = f"""You are a design system analyst. Extract a COMPLETE design system from {url}.
+    prompt = f"""You are a senior design systems architect. Generate a COMPREHENSIVE design system document for {url} as Markdown.
 
 EXTRACTED CSS DATA:
-{json.dumps(compact, indent=2)[:6000]}
+{json.dumps(compact, indent=2)[:8000]}
 
-Return a JSON object:
-{{
-  "colors": [
-    {{"hex": "#hex", "name": "descriptive name", "usage": "what it's used for"}}
-  ],
-  "fonts": [
-    {{"name": "Font Name", "weights": ["400","700"], "sizes": ["16px","24px"], "usage": "where used"}}
-  ],
-  "typography": {{
-    "heading_scale": {{"h1": "size", "h2": "size", "h3": "size"}},
-    "body_size": "16px",
-    "line_heights": ["1.5"],
-    "letter_spacings": ["0"]
-  }},
-  "spacing": {{
-    "unit": "4px or 8px",
-    "scale": ["4px","8px","12px","16px","24px","32px","48px","64px"],
-    "section_padding": "80px",
-    "component_gap": "16px"
-  }},
-  "borders": {{
-    "radius": ["8px"],
-    "width": ["1px"],
-    "color": "#e5e5e5"
-  }},
-  "shadows": ["0 1px 3px rgba(0,0,0,0.1)"],
-  "layout": {{
-    "max_width": "1200px",
-    "has_nav": true,
-    "has_footer": true,
-    "has_sidebar": false,
-    "uses_grid": true,
-    "uses_flex": true
-  }},
-  "components": {{
-    "buttons": "description",
-    "cards": "description",
-    "inputs": "description"
-  }},
-  "theme": "dark or light",
-  "design_style": "minimal, brutalist, corporate, playful, etc",
-  "css_variables": ":root {{ --primary: #hex; }}"
+Generate a Markdown document with this EXACT structure. Be thorough, specific, and write like a design system documentation — not a data dump.
+
+---
+
+# Design System: {{domain}}
+
+> Extracted from {url}
+> Powered by AI analysis
+
+## Overview
+
+Write 2-3 paragraphs analyzing the design philosophy. Cover:
+- What the site is (marketplace, SaaS, editorial, etc.)
+- The visual weight strategy (photography-led? type-led? whitespace-led?)
+- The single most distinctive design choice
+- How hierarchy is achieved (color? type scale? spacing?)
+
+## Colors
+
+### Brand & Accent
+For each brand color, give: semantic name, hex, and EXACT usage context.
+Example: "Rausch (#FF385C): The single brand color. Used for primary CTA backgrounds, the search orb, the heart save state."
+
+### Surface
+Document canvas/background colors: page floor, card surfaces, disabled states.
+
+### Hairlines & Borders
+Document border/divider colors with usage context.
+
+### Text
+Document text colors: headings, body, muted, disabled. Note if they avoid pure black.
+
+### Semantic
+Error, success, warning colors with usage.
+
+### CSS Variables
+```css
+:root {{
+  --primary: #hex;
+  --text-main: #hex;
+  /* etc */
 }}
+```
+
+## Typography
+
+### Font Family
+Document the font stack. Note if it's custom/variable. Mention fallbacks.
+
+### Hierarchy
+Create a FULL token table:
+
+| Token | Size | Weight | Line Height | Letter Spacing | Use |
+|---|---|---|---|---|---|
+| display-xl | 28px | 700 | 1.43 | 0 | Homepage h1 |
+| body-md | 16px | 400 | 1.5 | 0 | Default running text |
+| caption | 14px | 500 | 1.29 | 0 | Field labels |
+
+Include 12-18 tokens covering: display (xl/lg/md/sm), title (md/sm), body (md/sm), caption (sm), button (md/sm), badge, nav-link, etc.
+
+### Principles
+Explain the typographic strategy. Is display weight modest or heavy? Where is the single "loud" typographic moment?
+
+## Spacing System
+
+### Scale
+Document the base unit and full scale with named tokens:
+- `{{spacing.xxs}}` 2px · `{{spacing.xs}}` 4px · `{{spacing.sm}}` 8px · etc.
+
+### CSS Variables
+```css
+:root {{
+  --space-1: 4px;
+  --space-2: 8px;
+  /* etc */
+}}
+```
+
+### Usage Rules
+- Section padding (vertical)
+- Card internal padding
+- Gutters between cards
+- Dense element spacing
+
+## Borders & Radii
+
+### Radius Scale
+Name each radius token and document usage:
+- `{{rounded.sm}}` 8px — buttons
+- `{{rounded.md}}` 12px — cards
+- `{{rounded.full}}` 9999px — pills, avatars
+
+### Border Widths
+Document 1px hairlines, 1.5px medium, 2px focus states.
+
+### Border Color
+Default divider color.
+
+## Elevation (Shadows)
+
+Document the EXACT shadow values with context:
+- Flat (no shadow): 95% of surfaces
+- Card hover: `box-shadow: ...` — exact value
+- Modal/dropdown: if different
+
+Note if the system has progressive elevation tiers or just one.
+
+## Layout
+
+### Container & Grid
+- Max content width
+- Grid system (columns, gutters)
+- Breakpoint behavior
+
+### Responsive Behavior
+
+| Name | Width | Key Changes |
+|---|---|---|
+| Mobile | < 768px | Nav collapses, cards stack 1-up |
+| Tablet | 768-1024px | 2-column grids |
+| Desktop | > 1024px | Full layout |
+
+### Whitespace Philosophy
+Explain the spacing strategy. Is it airy/editorial or dense/marketplace?
+
+## Components
+
+For EACH major component, document:
+- Exact dimensions (height, padding, radius)
+- States (default, hover, active, disabled)
+- Typography tokens used
+- Color tokens used
+- Usage context
+
+### Buttons
+`button-primary` — {{color}} fill, {{text-color}} text, {{radius}} radius, {{padding}}, {{height}}px, weight {{weight}}.
+
+Document: primary, secondary, tertiary, ghost, pill variants.
+
+### Cards
+Document: border vs shadow, radius, padding, image treatment.
+
+### Inputs
+Document: height, padding, radius, border, focus state, label treatment.
+
+### Navigation
+Document: height, logo placement, link styling, mobile behavior.
+
+### Footer
+Document: columns, padding, link styling, legal band.
+
+## Known Gaps
+
+List what wasn't captured:
+- Hover states (if not extractable)
+- Loading/skeleton states
+- Map/interactive widget styling
+- Animation/motion design
+- Dark mode (if absent)
+
+---
 
 RULES:
-1. Use extracted colors/fonts/radii/shadows as foundation
-2. Fill spacing scale from extracted values
-3. Describe components based on design style
-4. Generate CSS variables
-5. Return ONLY the JSON, no other text"""
+1. Use EXACT hex values from extracted data — don't invent colors
+2. Create SEMANTIC names for colors (like "Rausch", "Ink", "Canvas") — not just "Primary", "Secondary"
+3. Typography tokens must have REAL sizes from extracted data
+4. Component specs must include EXACT measurements (height, padding, radius)
+5. Write like documentation, not a list — explain WHY design choices exist
+6. Include CSS custom properties throughout
+7. Be honest about gaps — list what you can't extract
+8. Output PURE MARKDOWN — no JSON, no code fences around the whole thing"""
 
     payload = json.dumps({
         "model": OPENROUTER_MODEL,
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 4000,
-        "temperature": 0.1
+        "max_tokens": 8000,
+        "temperature": 0.2
     }).encode()
 
     req = Request(
@@ -318,45 +440,88 @@ RULES:
 
     content = data["choices"][0]["message"]["content"]
 
-    json_match = re.search(r'```(?:json)?\s*\n?([\s\S]*?)\n?```', content)
-    if json_match:
-        content = json_match.group(1)
-    json_match = re.search(r'\{[\s\S]*\}', content)
-    if json_match:
-        content = json_match.group(0)
+    # Clean up markdown fences if wrapped
+    content = re.sub(r'^```markdown\s*\n', '', content)
+    content = re.sub(r'\n```\s*$', '', content)
 
-    return json.loads(content)
+    return {"markdown": content}
 
 
-def fallback_design(tokens):
-    """CSS-only fallback when LLM fails."""
-    return {
-        "colors": [{"hex": c, "name": "", "usage": ""} for c in tokens["colors"]],
-        "fonts": [{"name": f, "weights": [], "sizes": [], "usage": ""} for f in tokens["fonts"]],
-        "typography": {
-            "heading_scale": {},
-            "body_size": "",
-            "line_heights": sorted(tokens["line_heights"].keys(), key=lambda x: -tokens["line_heights"][x])[:6],
-            "letter_spacings": sorted(tokens["letter_spacings"].keys(), key=lambda x: -tokens["letter_spacings"][x])[:6]
-        },
-        "spacing": {
-            "unit": "", "scale": sorted(tokens["spacings"].keys(), key=lambda x: -tokens["spacings"][x])[:15],
-            "section_padding": "", "component_gap": ""
-        },
-        "borders": {
-            "radius": sorted(tokens["radii"].keys(), key=lambda x: -tokens["radii"][x])[:8],
-            "width": sorted(tokens["border_widths"].keys(), key=lambda x: -tokens["border_widths"][x])[:6],
-            "color": ""
-        },
-        "shadows": tokens["shadows"],
-        "layout": {
-            "max_width": sorted(tokens["max_widths"].keys(), key=lambda x: -tokens["max_widths"][x])[0] if tokens["max_widths"] else "",
-            "has_nav": True, "has_footer": True, "has_sidebar": False,
-            "uses_grid": True, "uses_flex": True
-        },
-        "components": {}, "theme": "unknown", "design_style": "unknown",
-        "css_variables": "", "_source": "css_fallback"
-    }
+def fallback_markdown(tokens, url):
+    """CSS-only fallback when LLM fails — generate basic markdown."""
+    domain = urlparse(url).netloc.replace('www.', '')
+    colors_list = tokens["colors"][:15]
+    fonts_list = tokens["fonts"][:5]
+    spacings = sorted(tokens["spacings"].keys(), key=lambda x: -tokens["spacings"][x])[:12]
+    radii = sorted(tokens["radii"].keys(), key=lambda x: -tokens["radii"][x])[:8]
+    shadows = tokens["shadows"][:5]
+    font_sizes = sorted(tokens["font_sizes"].items(), key=lambda x: -x[1])[:10]
+
+    md = f"""# Design System: {domain}
+
+> Extracted from {url}
+> Powered by CSS analysis (LLM unavailable)
+
+## Overview
+
+Design system extracted from CSS tokens. For full analysis with design philosophy and component specs, ensure LLM is available.
+
+## Colors
+
+| Hex | Usage |
+|-----|-------|
+"""
+    for c in colors_list:
+        md += f"| `{c}` | |\n"
+
+    md += f"""
+## Typography
+
+### Font Families
+
+"""
+    for f in fonts_list:
+        md += f"- **{f}**\n"
+
+    md += "\n### Font Sizes\n\n"
+    for size, count in font_sizes:
+        md += f"- `{size}` (used {count}x)\n"
+
+    md += f"""
+## Spacing System
+
+### Scale
+
+"""
+    for s in spacings:
+        md += f"- `{s}`\n"
+
+    md += f"""
+## Borders & Radii
+
+### Radius Scale
+
+"""
+    for r in radii:
+        md += f"- `{r}`\n"
+
+    md += f"""
+## Elevation (Shadows)
+
+"""
+    for s in shadows:
+        md += f"- `{s}`\n"
+
+    md += """
+## Known Gaps
+
+- LLM unavailable — full design analysis not generated
+- Component specifications not extracted
+- Design philosophy not analyzed
+- Responsive behavior not documented
+"""
+
+    return md
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -387,17 +552,23 @@ class Handler(SimpleHTTPRequestHandler):
 
                 # Step 4: LLM analysis
                 try:
-                    design = call_llm(tokens, url)
-                    design["_source"] = "llm"
+                    result = call_llm(tokens, url)
+                    design = result["markdown"]
+                    source = "llm"
                 except Exception as e:
                     print(f"LLM failed: {e}", file=sys.stderr)
-                    design = fallback_design(tokens)
+                    design = fallback_markdown(tokens, url)
+                    source = "css_fallback"
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
-                self.wfile.write(json.dumps({"design": design, "url": url}).encode())
+                self.wfile.write(json.dumps({
+                    "markdown": design,
+                    "url": url,
+                    "_source": source
+                }).encode())
 
             except Exception as e:
                 import traceback

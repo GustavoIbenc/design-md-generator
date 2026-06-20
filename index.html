@@ -52,18 +52,6 @@
     .cb{display:flex;gap:8px;margin-bottom:12px}
     .cb button{padding:7px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:6px;font-size:12px;font-weight:500;font-family:var(--f);cursor:pointer;transition:border-color .12s}
     .cb button:hover{border-color:var(--ac)}
-    .swg{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
-    .sw{border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:var(--sf)}
-    .swc{height:56px}
-    .swi{padding:8px}
-    .swx{font-family:var(--mono);font-size:11.5px;font-weight:500}
-    .swn{font-size:10px;color:var(--mt);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .swu{font-size:9.5px;color:#a3a3a3;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .fl{display:flex;flex-direction:column;gap:14px}
-    .fc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:20px}
-    .fn{font-family:var(--mono);font-size:12px;color:var(--mt);margin-bottom:6px}
-    .fs{font-size:26px;margin-bottom:6px}
-    .fm{font-size:11px;color:#a3a3a3}
     .emp{text-align:center;padding:60px 20px;color:var(--mt);font-size:14px}
     .emp-i{font-size:40px;margin-bottom:12px;opacity:.3}
     .src{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;margin-left:8px}
@@ -76,7 +64,7 @@
 <div class="w">
   <div class="logo">Design MD</div>
   <h1>Extract design systems<br>from any website</h1>
-  <p class="tag">Paste a URL. Get colors, typography, spacing, shadows, radii, layout — all as clean markdown, powered by AI.</p>
+  <p class="tag">Paste a URL. Get a complete design system as clean markdown — colors, typography, spacing, components, responsive behavior.</p>
   <div class="row">
     <input type="url" id="url" placeholder="https://stripe.com" autofocus>
     <button class="btn" id="go" onclick="run()">Extract</button>
@@ -87,20 +75,16 @@
     <div class="tabs">
       <div class="tab on" data-t="preview">Preview</div>
       <div class="tab" data-t="raw">Markdown</div>
-      <div class="tab" data-t="colors">Colors</div>
-      <div class="tab" data-t="fonts">Fonts</div>
     </div>
     <div class="pnl on" id="p-preview"><div class="md" id="mdv"></div></div>
     <div class="pnl" id="p-raw">
       <div class="cb"><button onclick="cp()">Copy</button><button onclick="dl()">Download .md</button></div>
       <div class="rw"><div class="raw" id="rawv"></div></div>
     </div>
-    <div class="pnl" id="p-colors"><div class="swg" id="swg"></div></div>
-    <div class="pnl" id="p-fonts"><div class="fl" id="flist"></div></div>
   </div>
 </div>
 <script>
-let M='',D={};
+let M='';
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.pnl').forEach(x=>x.classList.remove('on'));
@@ -125,205 +109,71 @@ async function run(){
     });
     const data=await r.json();
     if(data.error)throw new Error(data.error);
-    D=data.design||{};
-    D._url=url;
-    M=genMd(D);
-    document.getElementById('mdv').innerHTML=renderMd(M);
-    document.getElementById('rawv').textContent=M;
-    renderSwatches(D.colors||[]);
-    renderFonts(D.fonts||[]);
-    const src=D._source==='llm'?'<span class="src llm">AI</span>':'<span class="src css">CSS</span>';
-    st.className='st ok';
-    st.innerHTML='✓ '+(D.theme?D.theme+' theme · ':'')+url+' '+src;
+
+    // New format: markdown directly from LLM
+    M = data.markdown || '';
+
+    // Render markdown preview
+    document.getElementById('mdv').innerHTML = renderMd(M);
+    document.getElementById('rawv').textContent = M;
+
+    const src = data._source === 'llm' ? '<span class="src llm">AI</span>' : '<span class="src css">CSS</span>';
+    st.className = 'st ok';
+    st.innerHTML = '✓ Extracted ' + url + ' ' + src;
     res.classList.add('show');
   }catch(e){st.className='st err';st.textContent='Error: '+e.message}
   finally{btn.disabled=false;btn.textContent='Extract'}
 }
 
-/* ─── MARKDOWN ─── */
-function genMd(d){
-  const L=[];
-  const host=(()=>{try{return new URL(d._url||'').hostname}catch{return''}})();
-  L.push(`# Design System: ${host}`);
-  L.push(`\n> Extracted from [${d._url||''}](${d._url||''})`);
-  if(d._source==='llm')L.push('> Powered by AI analysis');
-  L.push('');
-
-  if(d.design_style||d.theme){
-    L.push('## Overview\n');
-    if(d.theme)L.push(`- **Theme:** ${d.theme}`);
-    if(d.design_style)L.push(`- **Style:** ${d.design_style}`);
-    L.push('');
-  }
-
-  // colors
-  if(d.colors&&d.colors.length){
-    L.push('## Colors\n');
-    L.push('| Color | Hex | Usage |');
-    L.push('|-------|-----|-------|');
-    d.colors.forEach(c=>{
-      const display=c.hex||c.value||c;
-      const name=c.name||'';
-      const usage=c.usage||'';
-      L.push(`| ![](https://placehold.co/20x20/${String(display).replace('#','')}/${String(display).replace('#','')}.png?text=+) | \`${display}\` | ${name} ${usage?'— '+usage:''} |`);
-    });
-    L.push('');
-
-    L.push('### CSS Variables\n');
-    L.push('```css');
-    L.push(':root {');
-    if(d.css_variables){
-      // use LLM's css_variables directly
-      const vars=d.css_variables.replace(/:root\s*\{/,'').replace(/\}$/,'').trim();
-      L.push(vars);
-    }else{
-      const names=['--color-primary','--color-secondary','--color-accent','--color-bg','--color-bg-alt','--color-surface','--color-text','--color-text-muted','--color-border','--color-link'];
-      d.colors.slice(0,10).forEach((c,i)=>{
-        const hex=c.hex||c.value||c;
-        L.push(`  ${names[i]||'--color-'+i}: ${hex};`);
-      });
-    }
-    L.push('}');
-    L.push('```\n');
-  }
-
-  // typography
-  if(d.fonts&&d.fonts.length){
-    L.push('## Typography\n');
-    d.fonts.forEach(f=>{
-      L.push(`### \`${f.name}\`\n`);
-      if(f.weights)L.push(`- **Weights:** ${f.weights.join(', ')}`);
-      if(f.sizes)L.push(`- **Sizes:** ${f.sizes.join(', ')}`);
-      if(f.usage)L.push(`- **Usage:** ${f.usage}`);
-      L.push('');
-    });
-  }
-
-  if(d.typography){
-    const t=d.typography;
-    if(t.heading_sizes){
-      L.push('### Heading Scale\n');
-      Object.entries(t.heading_sizes).forEach(([k,v])=>{
-        L.push(`- **${k.toUpperCase()}:** ${v}`);
-      });
-      L.push('');
-    }
-    if(t.body_size)L.push(`- **Body:** ${t.body_size}\n`);
-    if(t.line_heights)L.push(`- **Line Heights:** ${t.line_heights.join(', ')}\n`);
-    if(t.letter_spacings)L.push(`- **Letter Spacing:** ${t.letter_spacings.join(', ')}\n`);
-  }
-
-  // spacing
-  if(d.spacing){
-    const s=d.spacing;
-    L.push('## Spacing System\n');
-    if(s.unit)L.push(`- **Base Unit:** ${s.unit}`);
-    if(s.scale)L.push(`- **Scale:** ${s.scale.join(' → ')}`);
-    if(s.section_padding)L.push(`- **Section Padding:** ${s.section_padding}`);
-    if(s.component_gap)L.push(`- **Component Gap:** ${s.component_gap}`);
-    L.push('');
-
-    if(s.scale){
-      L.push('### CSS Variables\n');
-      L.push('```css');
-      L.push(':root {');
-      const spNames=['--space-1','--space-2','--space-3','--space-4','--space-5','--space-6','--space-8','--space-10','--space-12','--space-16'];
-      s.scale.forEach((v,i)=>L.push(`  ${spNames[i]||'--space-'+i}: ${v};`));
-      L.push('}');
-      L.push('```\n');
-    }
-  }
-
-  // borders
-  if(d.borders){
-    const b=d.borders;
-    L.push('## Borders & Radii\n');
-    if(b.radius)L.push(`- **Radius:** ${b.radius.join(', ')}`);
-    if(b.width)L.push(`- **Width:** ${b.width.join(', ')}`);
-    if(b.color)L.push(`- **Color:** \`${b.color}\``);
-    L.push('');
-  }
-
-  // shadows
-  if(d.shadows&&d.shadows.length){
-    L.push('## Shadows\n');
-    L.push('```css');
-    d.shadows.forEach(s=>L.push(`box-shadow: ${s};`));
-    L.push('```\n');
-  }
-
-  // layout
-  if(d.layout){
-    const l=d.layout;
-    L.push('## Layout\n');
-    if(l.max_width)L.push(`- **Max Width:** \`${l.max_width}\``);
-    L.push(`- **Nav:** ${l.has_nav?'✓':'✗'}`);
-    L.push(`- **Footer:** ${l.has_footer?'✓':'✗'}`);
-    L.push(`- **Sidebar:** ${l.has_sidebar?'✓':'✗'}`);
-    L.push(`- **Grid:** ${l.uses_grid?'✓':'✗'}`);
-    L.push(`- **Flexbox:** ${l.uses_flex?'✓':'✗'}`);
-    L.push('');
-  }
-
-  // components
-  if(d.components){
-    L.push('## Components\n');
-    Object.entries(d.components).forEach(([k,v])=>{
-      if(v)L.push(`### ${k.charAt(0).toUpperCase()+k.slice(1)}\n${typeof v==='string'?v:JSON.stringify(v)}\n`);
-    });
-  }
-
-  L.push('---');
-  const c1=(d.colors||[]).length,c2=(d.fonts||[]).length;
-  L.push(`*${c1} colors · ${c2} font families extracted*`);
-
-  return L.join('\n');
-}
-
+/* ─── SIMPLE MARKDOWN RENDERER ─── */
 function renderMd(md){
-  return md
-    .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g,'<code>$1</code>')
-    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
-    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
-    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
-    .replace(/^---$/gm,'<hr>')
-    .replace(/^\|(.+)\|$/gm,(_,c)=>{
-      if(c.match(/^[\s\-|]+$/))return '';
-      return '<tr>'+c.split('|').map(x=>`<td>${x.trim()}</td>`).join('')+'</tr>';
+  let html = md
+    // Code blocks (must be before inline code)
+    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Headers
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Blockquote
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr>')
+    // Tables
+    .replace(/^\|(.+)\|$/gm, (_, c) => {
+      if (c.match(/^[\s\-|]+$/)) return '';
+      return '<tr>' + c.split('|').map(x => `<td>${x.trim()}</td>`).join('') + '</tr>';
     })
-    .replace(/(<tr>[\s\S]*?<\/tr>)/g,'<table>$1</table>')
-    .replace(/<\/table>\s*<table>/g,'')
-    .replace(/^- (.+)$/gm,'<li>$1</li>')
-    .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
-    .replace(/<\/ul>\s*<ul>/g,'')
-    .replace(/\n\n/g,'</p><p>')
-    .replace(/\n/g,'<br>');
+    .replace(/(<tr>[\s\S]*?<\/tr>)/g, '<table>$1</table>')
+    .replace(/<\/table>\s*<table>/g, '')
+    // Lists
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g, '')
+    // Paragraphs
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  return '<p>' + html + '</p>';
 }
 
-function renderSwatches(colors){
-  const el=document.getElementById('swg');
-  if(!colors.length){el.innerHTML='<div class="emp"><div class="emp-i">🎨</div>No colors detected</div>';return}
-  el.innerHTML=colors.map(c=>{
-    const hex=c.hex||c.value||c;
-    const name=c.name||'';
-    const usage=c.usage||'';
-    return `<div class="sw"><div class="swc" style="background:${hex}"></div><div class="swi"><div class="swx">${hex}</div>${name?`<div class="swn">${name}</div>`:''}${usage?`<div class="swu">${usage}</div>`:''}</div></div>`;
-  }).join('');
+function cp(){
+  navigator.clipboard.writeText(M).then(()=>{
+    const b=event.target;b.textContent='Copied!';
+    setTimeout(()=>b.textContent='Copy',1200);
+  });
 }
 
-function renderFonts(fonts){
-  const el=document.getElementById('flist');
-  if(!fonts.length){el.innerHTML='<div class="emp"><div class="emp-i">Aa</div>No fonts detected</div>';return}
-  el.innerHTML=fonts.map(f=>{
-    return `<div class="fc"><div class="fn">${f.name}</div><div class="fs" style="font-family:${f.name}">The quick brown fox jumps</div><div class="fm">${[f.weights?'Weights: '+f.weights.join(', '):'',f.sizes?'Sizes: '+f.sizes.join(', '):'',f.usage||''].filter(Boolean).join(' · ')}</div></div>`;
-  }).join('');
+function dl(){
+  const b=new Blob([M],{type:'text/markdown'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='design-system.md';
+  a.click();
 }
-
-function cp(){navigator.clipboard.writeText(M).then(()=>{const b=event.target;b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1200)})}
-function dl(){const b=new Blob([M],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='design-system.md';a.click()}
 </script>
 </body>
 </html>
